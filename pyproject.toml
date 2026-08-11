@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "crococlean"
+version = "1.0.0"
+description = "CroCoClean decontaminates species abundance profiles from metagenomic samples affected by cross-sample contamination."
+authors = [
+    "Niya Ren",
+    "Emmanuelle Le Chatelier <emmanuelle.le-chatelier@inrae.fr>",
+    "Guillaume Gautreau <guillaume.gautreau@inrae.fr>",
+    "Florian Plaza Oñate <florian.plaza-onate@inrae.fr>",
+    "Lindsay Goulet <lindsay.goulet@inrae.fr>",
+]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+keywords = ["Metagenomics"]
+repository = "https://github.com/metagenopolis/CroCoClean"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+packages = [{ include = "crococlean" }]
+
+
+[tool.poetry.scripts]
+crococlean = "crococlean.crococlean:main"
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+pandas = "^2.3"
+numpy = "^2.4"
+tqdm = "^4.67"
+
+
+[tool.poetry.group.mypy.dependencies]
+mypy = "^1.19"
+pandas-stubs = "^2.3"
+types-tqdm = "^4.67"
+
+[tool.poetry.group.pylint.dependencies]
+pylint = "^4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
