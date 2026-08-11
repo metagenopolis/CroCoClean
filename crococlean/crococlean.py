@@ -106,10 +106,25 @@ def get_arguments() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--filter-low-ab",
+        dest="filtering_ab_thr_factor",
+        type=float,
+        required=False,
+        default=None,
+        metavar="AB_THRESHOLD_FACTOR",
+        help=(
+            "Filter out low-abundance species that may be inaccurately quantified. "
+            "In each sample, set the abundance of species to zero if they are up to "
+            "%(metavar)s times more abundant than the least abundant species. "
+            "Recommended value for MetaPhlAn4: 20 (default: None)"
+        ),
+    )
+
+    parser.add_argument(
         "--nproc",
         dest="nproc",
         type=nproc,
-        default=multiprocessing.cpu_count(),
+        default=1,
         help="Number of parallel processes performing decontamination (default: %(default)d)",
     )
 
@@ -121,7 +136,9 @@ def main() -> None:
     args = get_arguments()
 
     with open(args.input_table_fp, "r", encoding="utf8") as input_table_fh:
-        input_table = ab_table_utils.read_filter_normalize(input_table_fh)
+        input_table = ab_table_utils.read_filter_normalize(
+            input_table_fh, args.filtering_ab_thr_factor
+        )
 
     with open(args.conta_events_fp, "r", encoding="utf8") as conta_events_fh:
         conta_events = ContaminationEventIO.read_tsv(conta_events_fh)

@@ -80,6 +80,20 @@ crococlean \
     --nproc 8
 ```
 
+The optional `--filter-low-ab` parameter filters out low-abundance species that may be inaccurately quantified. The value should be the same as the `--filter-low-ab` parameter used when running CroCoDeEL.\\
+A value of 20 is recommended for MetaPhlAn 4.
+
+For example:
+
+```bash
+crococlean \
+    -s species_abundance.tsv \
+    -c crocodeel_output.tsv \
+    -o species_abundance_decontaminated.tsv \
+    --filter-low-ab 20
+```
+
+
 ### Output
 
 The original abundance profiles are retained in the output together with the decontaminated profiles generated for each contamination event.
