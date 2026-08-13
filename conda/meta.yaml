@@ -1,0 +1,42 @@
+{% set name = "crococlean" %}
+{% set version = "0.1.0" %}
+
+package:
+    name: {{ name }}
+    version: {{ version }}
+
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/crococlean-{{ version }}.tar.gz 
+  sha256: d58b17caf6907fb14a9ac8842f4611076fe97542e30ce9f1671466bb5e342756
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . --no-build-isolation --no-deps --no-cache-dir -vvv 
+  entry_points:
+    - crococlean = crococlean.crococlean:main
+  run_exports:
+    - {{ pin_subpackage('crococlean', max_pin="x.x") }}
+
+requirements:
+    host:
+        - python >=3.12
+        - poetry-core
+        - pip
+    run:
+        - python >=3.12
+        - pandas >=2.3
+        - numpy >=2.4
+        - tqdm >=4.67
+
+test:
+    commands:
+        - crococlean --version
+
+about:
+  home: https://github.com/metagenopolis/CroCoClean
+  license: GPL-3.0-or-later
+  license_file: COPYING
+  summary: 'CroCoClean decontaminates species abundance profiles from metagenomic samples affected by cross-sample contamination'
+  license_family: GPL3
