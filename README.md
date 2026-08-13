@@ -34,6 +34,14 @@ Alternatively, you can use [pip](https://pypi.org/project/crococlean/) with Pyth
 pip install crococlean
 ```
 
+### Test the installation
+
+After installation, you can run the built-in self-test to verify that CroCoClean is correctly installed:
+
+```bash
+crococlean test
+```
+
 ## Quick start
 
 ### Input
@@ -76,10 +84,10 @@ The [CroCoDeEL Interpreter](https://metagenopolis.github.io/CroCoDeEL_interprete
 
 ### Run CroCoClean
 
-Run the following command to decontaminate the species abundance table:
+CroCoClean uses the run subcommand to perform decontamination:
 
 ```bash
-crococlean \
+crococlean run \
     -s species_abundance.tsv \
     -c crococlean_output.tsv \
     -o species_abundance_decontaminated.tsv
@@ -88,22 +96,23 @@ crococlean \
 By default, CroCoClean uses a single process. The number of processes can be increased using the `--nproc` option:
 
 ```bash
-crococlean \
+crococlean run \
     -s species_abundance.tsv \
-    -c crococlean_output.tsv \
+    -c crocodeel_output.tsv \
     -o species_abundance_decontaminated.tsv \
     --nproc 8
 ```
 
-The optional `--filter-low-ab` parameter filters out low-abundance species that may be inaccurately quantified. The value should be the same as the `--filter-low-ab` parameter used when running CroCoDeEL.\\
+The optional `--filter-low-ab` parameter filters out low-abundance species that may be inaccurately quantified. The value should be the same as the `--filter-low-ab` parameter used when running CroCoDeEL.
+
 A value of 20 is recommended for MetaPhlAn 4.
 
 For example:
 
 ```bash
-crococlean \
+crococlean run \
     -s species_abundance.tsv \
-    -c crococlean_output.tsv \
+    -c crocodeel_output.tsv \
     -o species_abundance_decontaminated.tsv \
     --filter-low-ab 20
 ```
