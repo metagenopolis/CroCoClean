@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 from pathlib import Path
 import os
+import math
 from importlib.metadata import version
 from crococlean import ab_table_utils
 from crococlean.conta_event import ContaminationEventIO
@@ -49,6 +50,21 @@ def writable_file(fp_str: str) -> Path:
 
     return fp
 
+def positive_float(value: str) -> float:
+    """Validate a strictly positive floating-point value."""
+    try:
+        fvalue = float(value)
+    except ValueError as value_err:
+        raise argparse.ArgumentTypeError(
+            f"{value} is not a number"
+        ) from value_err
+
+    if not math.isfinite(fvalue) or fvalue <= 0:
+        raise argparse.ArgumentTypeError(
+            "value must be a finite number greater than 0"
+        )
+
+    return fvalue
 
 def nproc(value: str) -> int:
     max_nproc = multiprocessing.cpu_count()
@@ -108,7 +124,7 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--filter-low-ab",
         dest="filtering_ab_thr_factor",
-        type=float,
+        type=positive_float,
         required=False,
         default=None,
         metavar="AB_THRESHOLD_FACTOR",
