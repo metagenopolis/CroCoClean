@@ -33,7 +33,11 @@ class ContaminationEventIO:
                 row["target"],
                 float(row["rate"]),
                 float(row["probability"]),
-                row["contamination_specific_species"].split(","),
+                (
+                    row["contamination_specific_species"].split(",")
+                    if row["contamination_specific_species"]
+                    else []
+                ),
             )
             for row in tsv_reader
         ]
