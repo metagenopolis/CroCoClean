@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "crococlean"
-version = "0.1.0"
+version = "0.1.1"
 description = "CroCoClean decontaminates species abundance profiles from metagenomic samples affected by cross-sample contamination."
 authors = [
     "Niya Ren",
