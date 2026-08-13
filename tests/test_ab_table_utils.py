@@ -85,18 +85,16 @@ def test_read_filter_normalize_converts_integer_species_names_to_strings():
 
 
 def test_read_filter_normalize_rejects_invalid_species_names():
-    """Test that invalid species name types are rejected."""
+    """Test that non-string and non-integer species names are rejected."""
     table = io.StringIO(
         "species_name\tsample1\n"
-        "species 1\t0.1\n"
-        "species 2\t0.9\n"
+        "0.5\t0.1\n"
+        "0.6\t0.9\n"
     )
     table.name = "species_abundance.tsv"
 
-    # Strings are valid, so this should not raise.
-    result = read_filter_normalize(table)
-
-    assert len(result) == 2
+    with pytest.raises(SystemExit):
+        read_filter_normalize(table)
 
 
 def test_read_filter_normalize_rejects_non_numeric_abundances():
