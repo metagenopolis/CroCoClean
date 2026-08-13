@@ -11,6 +11,7 @@ from importlib.metadata import version
 from crococlean import ab_table_utils
 from crococlean.conta_event import ContaminationEventIO
 from crococlean.decontaminate import run_decontamination
+from crococlean.self_test import self_test
 
 
 def set_logging() -> None:
@@ -90,7 +91,13 @@ def get_arguments() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
     prog_name = "crococlean"
     prog_version = version(prog_name.lower())
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog=prog_name,
+        description=(
+            "Decontaminate species abundance profiles affected "
+            "by cross-sample contamination."
+        ),
+    )
 
     parser.add_argument(
         "-v",
@@ -99,7 +106,18 @@ def get_arguments() -> argparse.Namespace:
         version=f"{prog_name} version {prog_version}",
     )
 
-    parser.add_argument(
+    subparsers = parser.add_subparsers(
+        dest="command",
+        required=True,
+    )
+
+    # Run subcommand
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Decontaminate species abundance profiles.",
+    )
+
+    run_parser.add_argument(
         "-s",
         dest="input_table_fp",
         type=readable_file,
@@ -108,7 +126,7 @@ def get_arguments() -> argparse.Namespace:
         help="Input TSV file corresponding to the species abundance table",
     )
 
-    parser.add_argument(
+    run_parser.add_argument(
         "-c",
         dest="conta_events_fp",
         type=readable_file,
@@ -117,7 +135,7 @@ def get_arguments() -> argparse.Namespace:
         help="Input TSV file created by CroCoDeEL listing contamination events.",
     )
 
-    parser.add_argument(
+    run_parser.add_argument(
         "-o",
         dest="output_table_fp",
         type=writable_file,
@@ -126,7 +144,7 @@ def get_arguments() -> argparse.Namespace:
         help="Output TSV file containing the original and decontaminated profiles.",
     )
 
-    parser.add_argument(
+    run_parser.add_argument(
         "--filter-low-ab",
         dest="filtering_ab_thr_factor",
         type=positive_float,
@@ -141,7 +159,7 @@ def get_arguments() -> argparse.Namespace:
         ),
     )
 
-    parser.add_argument(
+    run_parser.add_argument(
         "--nproc",
         dest="nproc",
         type=nproc,
@@ -149,7 +167,48 @@ def get_arguments() -> argparse.Namespace:
         help="Number of parallel processes performing decontamination (default: %(default)d)",
     )
 
+    # Test subcommand
+    subparsers.add_parser(
+        "test",
+        help="Test the CroCoClean installation.",
+    )
+
     return parser.parse_args(args=sys.argv[1:] or ["--help"])
+
+
+def run_crococlean(
+    input_table_fp: Path,
+    conta_events_fp: Path,
+    output_table_fp: Path,
+    filtering_ab_thr_factor: float | None,
+    nproc: int,
+) -> None:
+    """Run CroCoClean on the specified input files."""
+    with open(input_table_fp, "r", encoding="utf8") as input_table_fh:
+        input_table = ab_table_utils.read_filter_normalize(
+            input_table_fh,
+            filtering_ab_thr_factor,
+        )
+
+    with open(conta_events_fp, "r", encoding="utf8") as conta_events_fh:
+        conta_events = ContaminationEventIO.read_tsv(conta_events_fh)
+
+    corrected_table = run_decontamination(
+        input_table,
+        conta_events,
+        nproc,
+    )
+
+    corrected_table.to_csv(
+        output_table_fp,
+        sep="\t",
+        index=True,
+    )
+
+    logging.info(
+        "Corrected species abundance table saved in %s",
+        output_table_fp,
+    )
 
 
 # pylint: disable=missing-function-docstring
@@ -157,24 +216,16 @@ def main() -> None:
     set_logging()
     args = get_arguments()
 
-    with open(args.input_table_fp, "r", encoding="utf8") as input_table_fh:
-        input_table = ab_table_utils.read_filter_normalize(
-            input_table_fh, args.filtering_ab_thr_factor
-        )
+    if args.command == "test":
+        self_test(run_crococlean)
+        sys.exit(0)
 
-    with open(args.conta_events_fp, "r", encoding="utf8") as conta_events_fh:
-        conta_events = ContaminationEventIO.read_tsv(conta_events_fh)
-
-    corrected_table = run_decontamination(input_table, conta_events, args.nproc)
-
-    corrected_table.to_csv(
+    run_crococlean(
+        args.input_table_fp,
+        args.conta_events_fp,
         args.output_table_fp,
-        sep="\t",
-        index=True,
-    )
-    logging.info(
-        "Corrected species abundance table saved in %s",
-        args.output_table_fp.name,
+        args.filtering_ab_thr_factor,
+        args.nproc,
     )
 
 
