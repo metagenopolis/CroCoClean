@@ -29,3 +29,6 @@ jobs:
 
       - name: Run tests
         run: poetry run pytest -v
+
+      - name: Run installation self-test
+        run: poetry run crococlean test
