@@ -1,5 +1,5 @@
 {% set name = "crococlean" %}
-{% set version = "0.1.1" %}
+{% set version = "0.1.2" %}
 
 package:
     name: {{ name }}
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/crococlean-{{ version }}.tar.gz 
-  sha256: 357810ed1338732ad1441725f18b715beadf9b3110f561d4f527be5c07211cbe 
+  sha256: 2dc2dc78cc57f2c0faf6619ce398d5bfcce81ce403566e1a6453d23b9d999dcd
 
 build:
   noarch: python
@@ -33,6 +33,7 @@ requirements:
 test:
     commands:
         - crococlean --version
+        - crococlean test
 
 about:
   home: https://github.com/metagenopolis/CroCoClean
