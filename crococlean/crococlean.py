@@ -109,7 +109,7 @@ def get_arguments() -> argparse.Namespace:
         type=readable_file,
         required=True,
         metavar="CONTAMINATION_EVENTS_FILE",
-        help="Input TSV file created by CroCoDeEL listing contaminations events.",
+        help="Input TSV file created by CroCoDeEL listing contamination events.",
     )
 
     parser.add_argument(
