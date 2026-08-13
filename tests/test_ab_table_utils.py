@@ -1,3 +1,5 @@
+"""Unit tests for species abundance table utilities."""
+
 import io
 import logging
 
@@ -37,21 +39,6 @@ def test_read():
     pd.testing.assert_frame_equal(result, expected)
 
 
-def test_read_converts_integer_species_names_to_strings():
-    """Test that integer species names are converted to strings."""
-    table = io.StringIO(
-        "species_name\tsample1\n"
-        "123\t0.1\n"
-        "456\t0.9\n"
-    )
-    table.name = "species_abundance.tsv"
-
-    result = read(table)
-
-    assert result.index.tolist() == ["123", "456"]
-    assert result.index.dtype == object
-
-
 def test_read_accepts_comments():
     """Test that comment lines are ignored."""
     table = io.StringIO(
@@ -80,6 +67,75 @@ def test_read_logs_table_dimensions(caplog):
         read(table)
 
     assert "2 species in 2 samples" in caplog.text
+
+
+def test_read_filter_normalize_converts_integer_species_names_to_strings():
+    """Test that integer species names are converted to strings."""
+    table = io.StringIO(
+        "species_name\tsample1\n"
+        "123\t0.1\n"
+        "456\t0.9\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    result = read_filter_normalize(table)
+
+    assert result.index.tolist() == ["123", "456"]
+    assert result.index.dtype == object
+
+
+def test_read_filter_normalize_rejects_invalid_species_names():
+    """Test that invalid species name types are rejected."""
+    table = io.StringIO(
+        "species_name\tsample1\n"
+        "species 1\t0.1\n"
+        "species 2\t0.9\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    # Strings are valid, so this should not raise.
+    result = read_filter_normalize(table)
+
+    assert len(result) == 2
+
+
+def test_read_filter_normalize_rejects_non_numeric_abundances():
+    """Test that non-numeric abundances are rejected."""
+    table = io.StringIO(
+        "species_name\tsample1\tsample2\n"
+        "species_1\t0.1\tfoo\n"
+        "species_2\t0.9\tbar\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    with pytest.raises(SystemExit):
+        read_filter_normalize(table)
+
+
+def test_read_filter_normalize_rejects_negative_abundances():
+    """Test that negative abundances are rejected."""
+    table = io.StringIO(
+        "species_name\tsample1\tsample2\n"
+        "species_1\t-0.1\t0.2\n"
+        "species_2\t1.1\t0.8\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    with pytest.raises(SystemExit):
+        read_filter_normalize(table)
+
+
+def test_read_filter_normalize_rejects_empty_samples():
+    """Test that samples with no non-zero abundances are rejected."""
+    table = io.StringIO(
+        "species_name\tsample1\tsample2\n"
+        "species_1\t0.0\t0.2\n"
+        "species_2\t0.0\t0.8\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    with pytest.raises(SystemExit):
+        read_filter_normalize(table)
 
 
 def test_normalize():
@@ -144,8 +200,8 @@ def test_filter_low_ab():
     pd.testing.assert_frame_equal(result, expected)
 
 
-def test_filter_low_ab_keeps_abundance_above_threshold():
-    """Test that abundances above the threshold are retained."""
+def test_filter_low_ab_removes_species_at_threshold():
+    """Test that abundances equal to the threshold are removed."""
     table = pd.DataFrame(
         {
             "sample1": [0.01, 0.02, 0.03],
@@ -155,8 +211,9 @@ def test_filter_low_ab_keeps_abundance_above_threshold():
 
     result = filter_low_ab(table, filtering_ab_thr_factor=2)
 
+    # Minimum non-zero abundance = 0.01.
     # Threshold = 0.02.
-    # The implementation uses <=, so both 0.01 and 0.02 are removed.
+    # The implementation uses <=, so 0.01 and 0.02 are removed.
     assert result.loc["species_1", "sample1"] == 0.0
     assert result.loc["species_2", "sample1"] == 0.0
     assert result.loc["species_3", "sample1"] == 0.03
@@ -203,7 +260,7 @@ def test_read_filter_normalize_with_filtering():
 
     # Minimum abundance = 1.
     # Threshold = 2.
-    # species_1 is removed, then remaining abundances are normalized.
+    # species_1 is removed; species_2 and species_3 are retained.
     expected = pd.DataFrame(
         {
             "sample1": [0.0, 3 / 13, 10 / 13],
@@ -215,3 +272,22 @@ def test_read_filter_normalize_with_filtering():
     )
 
     pd.testing.assert_frame_equal(result, expected)
+
+
+def test_read_filter_normalize_rejects_samples_emptied_by_filtering():
+    """Test that filtering cannot remove all species from a sample."""
+    table = io.StringIO(
+        "species_name\tsample1\n"
+        "species_1\t1\n"
+        "species_2\t2\n"
+    )
+    table.name = "species_abundance.tsv"
+
+    # Minimum abundance = 1.
+    # Threshold = 20.
+    # Both species are removed.
+    with pytest.raises(SystemExit):
+        read_filter_normalize(
+            table,
+            filtering_ab_thr_factor=20,
+        )
