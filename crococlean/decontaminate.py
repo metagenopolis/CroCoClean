@@ -1,3 +1,5 @@
+"""Functions for decontaminating species abundance profiles."""
+
 import logging
 from collections import Counter
 from multiprocessing import Pool
@@ -10,6 +12,7 @@ from crococlean.conta_event import ContaminationEvent
 def run_decontamination(
     species_ab_table: pd.DataFrame, conta_events: list[ContaminationEvent], nproc: int
 ) -> pd.DataFrame:
+    """Generate decontaminated abundance profiles for contamination events."""
     if not conta_events:
         return species_ab_table.copy()
 
@@ -64,13 +67,14 @@ def _warn_multiple_contamination_sources(
             n_targets_multiple_sources,
             "" if n_targets_multiple_sources == 1 else "s",
         )
+
+
 def _warn_high_contamination_rates(
     conta_events: list[ContaminationEvent],
     high_rate_cutoff: float = 0.10,
 ) -> None:
     high_rate_events = [
-        event for event in conta_events
-        if event.rate >= high_rate_cutoff
+        event for event in conta_events if event.rate >= high_rate_cutoff
     ]
 
     if high_rate_events:
@@ -89,6 +93,8 @@ def _warn_high_contamination_rates(
 
 # pylint: disable=too-few-public-methods
 class DecontaminationWorker:
+    """Worker for decontaminating individual contamination events."""
+
     def __init__(
         self,
         species_ab_table: pd.DataFrame,
@@ -96,6 +102,7 @@ class DecontaminationWorker:
         self.species_ab_table = species_ab_table
 
     def decontaminate(self, conta_event: ContaminationEvent) -> pd.Series:
+        """Generate a decontaminated profile for one contamination event."""
         source = self.species_ab_table[conta_event.source]
         target = self.species_ab_table[conta_event.target]
 

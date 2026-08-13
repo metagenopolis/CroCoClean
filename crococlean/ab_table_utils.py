@@ -1,4 +1,5 @@
 """Utilities for reading and preprocessing species abundance tables."""
+
 import logging
 import sys
 from typing import TextIO, Optional

@@ -1,3 +1,5 @@
+"""Data structures and I/O utilities for contamination events."""
+
 from dataclasses import dataclass, field
 import csv
 from typing import TextIO
@@ -6,6 +8,8 @@ import logging
 
 @dataclass
 class ContaminationEvent:
+    """Represent a cross-sample contamination event."""
+
     source: str
     target: str
     rate: float = field(default=0.0)
@@ -14,11 +18,14 @@ class ContaminationEvent:
 
 
 class ContaminationEventIO:
+    """Read and write contamination events in TSV format."""
+
     @staticmethod
     def read_tsv(fh: TextIO) -> list[ContaminationEvent]:
+        """Read contamination events from a TSV file."""
         # Ugly hack to skip comment lines
         pos = 0
-        while fh :
+        while fh:
             line = fh.readline()
             if not line.startswith("#"):
                 break
@@ -53,6 +60,7 @@ class ContaminationEventIO:
 
     @staticmethod
     def write_tsv(conta_events: list[ContaminationEvent], fh: TextIO) -> None:
+        """Write contamination events to a TSV file."""
         # Write header
         print(
             "\t".join(

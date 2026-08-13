@@ -1,3 +1,5 @@
+"""Command-line interface for CroCoClean."""
+
 import sys
 import argparse
 import logging
@@ -12,12 +14,14 @@ from crococlean.decontaminate import run_decontamination
 
 
 def set_logging() -> None:
+    """Configure logging for the command-line application."""
     logging.basicConfig(
         format="%(asctime)s :: %(levelname)s :: %(message)s", level=logging.INFO
     )
 
 
 def readable_file(fp_str: str) -> Path:
+    """Validate that a path points to a readable regular file."""
     fp = Path(fp_str).resolve()
 
     if not fp.exists():
@@ -31,6 +35,7 @@ def readable_file(fp_str: str) -> Path:
 
 
 def writable_file(fp_str: str) -> Path:
+    """Validate that a path can be used as an output file."""
     fp = Path(fp_str).resolve()
 
     if fp.exists():
@@ -50,23 +55,22 @@ def writable_file(fp_str: str) -> Path:
 
     return fp
 
+
 def positive_float(value: str) -> float:
     """Validate a strictly positive floating-point value."""
     try:
         fvalue = float(value)
     except ValueError as value_err:
-        raise argparse.ArgumentTypeError(
-            f"{value} is not a number"
-        ) from value_err
+        raise argparse.ArgumentTypeError(f"{value} is not a number") from value_err
 
     if not math.isfinite(fvalue) or fvalue <= 0:
-        raise argparse.ArgumentTypeError(
-            "value must be a finite number greater than 0"
-        )
+        raise argparse.ArgumentTypeError("value must be a finite number greater than 0")
 
     return fvalue
 
+
 def nproc(value: str) -> int:
+    """Validate the number of requested parallel processes."""
     max_nproc = multiprocessing.cpu_count()
 
     try:
@@ -83,6 +87,7 @@ def nproc(value: str) -> int:
 
 
 def get_arguments() -> argparse.Namespace:
+    """Parse and validate command-line arguments."""
     prog_name = "crococlean"
     prog_version = version(prog_name.lower())
     parser = argparse.ArgumentParser()
@@ -147,6 +152,7 @@ def get_arguments() -> argparse.Namespace:
     return parser.parse_args(args=sys.argv[1:] or ["--help"])
 
 
+# pylint: disable=missing-function-docstring
 def main() -> None:
     set_logging()
     args = get_arguments()
@@ -159,9 +165,7 @@ def main() -> None:
     with open(args.conta_events_fp, "r", encoding="utf8") as conta_events_fh:
         conta_events = ContaminationEventIO.read_tsv(conta_events_fh)
 
-    corrected_table = run_decontamination(
-        input_table, conta_events, args.nproc
-    )
+    corrected_table = run_decontamination(input_table, conta_events, args.nproc)
 
     corrected_table.to_csv(
         args.output_table_fp,
