@@ -151,9 +151,8 @@ def test_nproc_valid():
     """Test that a valid process count is accepted."""
     assert nproc("1") == 1
 
-
 def test_get_arguments(monkeypatch, tmp_path):
-    """Test parsing the command-line arguments."""
+    """Test parsing the run command-line arguments."""
     input_file = tmp_path / "input.tsv"
     conta_file = tmp_path / "contamination.tsv"
     output_file = tmp_path / "output.tsv"
@@ -165,6 +164,7 @@ def test_get_arguments(monkeypatch, tmp_path):
         "sys.argv",
         [
             "crococlean",
+            "run",
             "-s",
             str(input_file),
             "-c",
@@ -180,6 +180,7 @@ def test_get_arguments(monkeypatch, tmp_path):
 
     args = get_arguments()
 
+    assert args.command == "run"
     assert args.input_table_fp == input_file.resolve()
     assert args.conta_events_fp == conta_file.resolve()
     assert args.output_table_fp == output_file.resolve()
