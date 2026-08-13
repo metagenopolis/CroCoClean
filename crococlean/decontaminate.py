@@ -59,7 +59,7 @@ def _warn_multiple_contamination_sources(
 
     if n_targets_multiple_sources:
         logging.warning(
-            "%d target sample%s have multiple contamination sources. "
+            "Multiple contamination sources were detected for %d target sample%s. "
             "Each decontamination will be performed independently.",
             n_targets_multiple_sources,
             "" if n_targets_multiple_sources == 1 else "s",
