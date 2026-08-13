@@ -1,5 +1,5 @@
 {% set name = "crococlean" %}
-{% set version = "0.1.0" %}
+{% set version = "0.1.1" %}
 
 package:
     name: {{ name }}
@@ -8,7 +8,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/crococlean-{{ version }}.tar.gz 
-  sha256: d58b17caf6907fb14a9ac8842f4611076fe97542e30ce9f1671466bb5e342756
+  sha256: 357810ed1338732ad1441725f18b715beadf9b3110f561d4f527be5c07211cbe 
 
 build:
   noarch: python
