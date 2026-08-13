@@ -86,7 +86,7 @@ def test_read_tsv_empty_species_list():
     events = ContaminationEventIO.read_tsv(tsv)
 
     assert len(events) == 1
-    assert events[0].conta_line_species == [""]
+    assert events[0].conta_line_species == []
 
 
 def test_write_tsv():

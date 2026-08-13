@@ -7,6 +7,7 @@ import pytest
 
 from crococlean.crococlean import (
     get_arguments,
+    positive_float,
     nproc,
     readable_file,
     writable_file,
@@ -80,6 +81,57 @@ def test_writable_file_new_file(tmp_path):
 
 
 @pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("1", 1.0),
+        ("0.1", 0.1),
+        ("1.5", 1.5),
+        ("1e-3", 0.001),
+    ],
+)
+def test_positive_float_valid(value, expected):
+    """Test that positive floating-point values are accepted."""
+    assert positive_float(value) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["0", "-1", "-0.1"],
+)
+def test_positive_float_non_positive(value):
+    """Test that non-positive values are rejected."""
+    with pytest.raises(
+        argparse.ArgumentTypeError,
+        match="finite number greater than 0",
+    ):
+        positive_float(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "abc",
+        "1.2.3",
+        "",
+    ],
+)
+def test_positive_float_invalid(value):
+    """Test that non-numeric values are rejected."""
+    with pytest.raises(
+        argparse.ArgumentTypeError,
+        match=f"{value} is not a number",
+    ):
+        positive_float(value)
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_positive_float_special_values(value):
+    """Test that non-finite floating-point values are rejected."""
+    with pytest.raises(argparse.ArgumentTypeError):
+        positive_float(value)
+
+
+@pytest.mark.parametrize(
     "value",
     ["0", "-1", "abc"],
 )
@@ -108,7 +160,7 @@ def test_get_arguments(monkeypatch, tmp_path):
 
     input_file.write_text("species_name\tsample1\nspecies1\t1\n")
     conta_file.write_text("")
-    
+
     monkeypatch.setattr(
         "sys.argv",
         [
