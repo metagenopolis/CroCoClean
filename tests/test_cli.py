@@ -185,4 +185,34 @@ def test_get_arguments(monkeypatch, tmp_path):
     assert args.conta_events_fp == conta_file.resolve()
     assert args.output_table_fp == output_file.resolve()
     assert args.filtering_ab_thr_factor == 20
+    assert args.normalize_ab
     assert args.nproc == 2
+
+
+def test_get_arguments_no_normalization(monkeypatch, tmp_path):
+    """Test that --no-normalization disables normalization."""
+    input_file = tmp_path / "input.tsv"
+    conta_file = tmp_path / "contamination.tsv"
+    output_file = tmp_path / "output.tsv"
+
+    input_file.write_text("species_name\tsample1\nspecies1\t1\n")
+    conta_file.write_text("")
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "crococlean",
+            "run",
+            "-s",
+            str(input_file),
+            "-c",
+            str(conta_file),
+            "-o",
+            str(output_file),
+            "--no-normalization",
+        ],
+    )
+
+    args = get_arguments()
+
+    assert not args.normalize_ab

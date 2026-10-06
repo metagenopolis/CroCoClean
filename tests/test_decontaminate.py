@@ -356,3 +356,102 @@ def test_run_decontamination_with_no_events():
     )
 
     pd.testing.assert_frame_equal(result, table)
+
+
+def test_decontaminate_without_normalization(species_ab_table):
+    """Test that the corrected profile is not renormalized."""
+    worker = DecontaminationWorker(species_ab_table, normalize_ab=False)
+
+    event = ContaminationEvent(
+        source="source",
+        target="target",
+        rate=0.1,
+        conta_line_species=[],
+    )
+
+    corrected = worker.decontaminate(event)
+
+    # Contamination subtraction:
+    # species_1: 0.2 - 0.1 * 0.4 = 0.16
+    # species_2: 0.3 - 0.1 * 0.3 = 0.27
+    # species_3: 0.5 - 0.1 * 0.3 = 0.47
+    #
+    # Minimum non-zero target abundance = 0.2, so species_1 is removed.
+    # The remaining abundances keep their original values.
+    expected = pd.Series(
+        [0.0, 0.27, 0.47],
+        index=["species_1", "species_2", "species_3"],
+        name="target_deconta_source",
+    )
+
+    pd.testing.assert_series_equal(corrected, expected)
+    assert corrected.sum() == pytest.approx(0.74)
+
+
+def test_decontaminate_without_normalization_keeps_coverage_units():
+    """Test decontamination of profiles expressed as genome coverage."""
+    table = pd.DataFrame(
+        {
+            "source": [8.0, 5.0, 3.0],
+            "target": [1.0, 2.0, 3.0],
+        },
+        index=["species_1", "species_2", "species_3"],
+    )
+
+    worker = DecontaminationWorker(table, normalize_ab=False)
+
+    event = ContaminationEvent(
+        source="source",
+        target="target",
+        rate=0.05,
+        conta_line_species=[],
+    )
+
+    corrected = worker.decontaminate(event)
+
+    # Coverage is subtracted directly, without rescaling the source:
+    # species_1: 1.0 - 0.05 * 8.0 = 0.60
+    # species_2: 2.0 - 0.05 * 5.0 = 1.75
+    # species_3: 3.0 - 0.05 * 3.0 = 2.85
+    #
+    # Minimum non-zero target coverage = 1.0, so species_1 is removed.
+    expected = pd.Series(
+        [0.0, 1.75, 2.85],
+        index=["species_1", "species_2", "species_3"],
+        name="target_deconta_source",
+    )
+
+    pd.testing.assert_series_equal(corrected, expected)
+
+
+def test_run_decontamination_without_normalization():
+    """Test that corrected profiles keep their units end to end."""
+    table = pd.DataFrame(
+        {
+            "source": [8.0, 5.0, 3.0],
+            "target": [1.0, 2.0, 3.0],
+        },
+        index=["species_1", "species_2", "species_3"],
+    )
+
+    events = [
+        ContaminationEvent(
+            source="source",
+            target="target",
+            rate=0.05,
+            conta_line_species=[],
+        )
+    ]
+
+    result = run_decontamination(
+        table,
+        events,
+        nproc=1,
+        normalize_ab=False,
+    )
+
+    # 0.0 + 1.75 + 2.85 = 4.60
+    assert result["target_deconta_source"].sum() == pytest.approx(4.60)
+
+    pd.testing.assert_series_equal(result["source"], table["source"])
+    pd.testing.assert_series_equal(result["target"], table["target"])

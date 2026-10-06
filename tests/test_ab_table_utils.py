@@ -289,3 +289,77 @@ def test_read_filter_normalize_rejects_samples_emptied_by_filtering():
             table,
             filtering_ab_thr_factor=20,
         )
+
+
+def test_read_filter_normalize_without_normalization():
+    """Test that normalization to relative abundances can be disabled."""
+    table = io.StringIO(
+        "species_name\tsample1\tsample2\n"
+        "species_1\t1.0\t4.0\n"
+        "species_2\t3.0\t4.0\n"
+    )
+    table.name = "species_coverage.tsv"
+
+    result = read_filter_normalize(table, normalize_ab=False)
+
+    # Abundances are left untouched and samples do not sum to one.
+    expected = pd.DataFrame(
+        {
+            "sample1": [1.0, 3.0],
+            "sample2": [4.0, 4.0],
+        },
+        index=pd.Index(
+            ["species_1", "species_2"],
+            name="species_name",
+        ),
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_read_filter_normalize_with_filtering_without_normalization():
+    """Test low-abundance filtering without normalization."""
+    table = io.StringIO(
+        "species_name\tsample1\n"
+        "species_1\t1.0\n"
+        "species_2\t3.0\n"
+        "species_3\t10.0\n"
+    )
+    table.name = "species_coverage.tsv"
+
+    result = read_filter_normalize(
+        table,
+        filtering_ab_thr_factor=2,
+        normalize_ab=False,
+    )
+
+    # Minimum abundance = 1.0.
+    # Threshold = 2.0.
+    # species_1 is removed; the other abundances keep their original values.
+    expected = pd.DataFrame(
+        {
+            "sample1": [0.0, 3.0, 10.0],
+        },
+        index=pd.Index(
+            ["species_1", "species_2", "species_3"],
+            name="species_name",
+        ),
+    )
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_read_filter_normalize_logs_disabled_normalization(caplog):
+    """Test that disabling normalization is reported."""
+    table = io.StringIO(
+        "species_name\tsample1\n"
+        "species_1\t1.0\n"
+        "species_2\t3.0\n"
+    )
+    table.name = "species_coverage.tsv"
+
+    with caplog.at_level(logging.INFO):
+        read_filter_normalize(table, normalize_ab=False)
+
+    assert "Normalization disabled" in caplog.text
+    assert "normalized" not in caplog.text

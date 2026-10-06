@@ -105,9 +105,11 @@ def filter_low_ab(
 
 
 def read_filter_normalize(
-    fh: TextIO, filtering_ab_thr_factor: Optional[float] = None
+    fh: TextIO,
+    filtering_ab_thr_factor: Optional[float] = None,
+    normalize_ab: bool = True,
 ) -> pd.DataFrame:
-    """Read, validate, optionally filter, and normalize a species abundance table."""
+    """Read, validate, optionally filter and normalize a species abundance table."""
     species_ab_table = read(fh)
     _validate_and_normalize_species_names(species_ab_table)
     _check_numeric_abundances(species_ab_table)
@@ -118,6 +120,11 @@ def read_filter_normalize(
         species_ab_table = filter_low_ab(species_ab_table, filtering_ab_thr_factor)
         _check_non_empty_samples(species_ab_table)
 
-    species_ab_table = normalize(species_ab_table)
+    if normalize_ab:
+        species_ab_table = normalize(species_ab_table)
+    else:
+        logging.info(
+            "Normalization disabled: species abundances kept in their original units"
+        )
 
     return species_ab_table

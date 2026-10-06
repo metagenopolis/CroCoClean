@@ -10,7 +10,7 @@ import pandas as pd
 
 def self_test(
     run_crococlean: Callable[
-        [Path, Path, Path, float | None, int],
+        [Path, Path, Path, float | None, bool, int],
         None,
     ],
 ) -> None:
@@ -50,6 +50,7 @@ def self_test(
             conta_events_fp,
             output_table_fp,
             filtering_ab_thr_factor=None,
+            normalize_ab=True,
             nproc=1,
         )
 

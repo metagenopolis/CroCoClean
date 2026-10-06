@@ -10,7 +10,10 @@ from crococlean.conta_event import ContaminationEvent
 
 
 def run_decontamination(
-    species_ab_table: pd.DataFrame, conta_events: list[ContaminationEvent], nproc: int
+    species_ab_table: pd.DataFrame,
+    conta_events: list[ContaminationEvent],
+    nproc: int,
+    normalize_ab: bool = True,
 ) -> pd.DataFrame:
     """Generate decontaminated abundance profiles for contamination events."""
     if not conta_events:
@@ -26,7 +29,7 @@ def run_decontamination(
         "" if nproc == 1 else "es",
     )
 
-    worker = DecontaminationWorker(species_ab_table)
+    worker = DecontaminationWorker(species_ab_table, normalize_ab)
     corrected_profiles = []
 
     with Pool(processes=nproc) as pool:
@@ -98,8 +101,10 @@ class DecontaminationWorker:
     def __init__(
         self,
         species_ab_table: pd.DataFrame,
+        normalize_ab: bool = True,
     ) -> None:
         self.species_ab_table = species_ab_table
+        self.normalize_ab = normalize_ab
 
     def decontaminate(self, conta_event: ContaminationEvent) -> pd.Series:
         """Generate a decontaminated profile for one contamination event."""
@@ -119,9 +124,10 @@ class DecontaminationWorker:
         corrected.loc[conta_event.conta_line_species] = 0.0
 
         # Renormalize to sum to one
-        total = corrected.sum()
-        if total > 0:
-            corrected /= total
+        if self.normalize_ab:
+            total = corrected.sum()
+            if total > 0:
+                corrected /= total
 
         corrected.name = f"{conta_event.target}_deconta_{conta_event.source}"
 

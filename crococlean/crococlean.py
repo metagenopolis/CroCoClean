@@ -160,6 +160,18 @@ def get_arguments() -> argparse.Namespace:
     )
 
     run_parser.add_argument(
+        "--no-normalization",
+        dest="normalize_ab",
+        action="store_false",
+        help=(
+            "Do not normalize species abundances to relative abundances. "
+            "Abundances in the input and output tables are kept in their "
+            "original units. Useful for profiles expressed as estimated genome "
+            "coverage (default: normalization enabled)"
+        ),
+    )
+
+    run_parser.add_argument(
         "--nproc",
         dest="nproc",
         type=nproc,
@@ -176,11 +188,13 @@ def get_arguments() -> argparse.Namespace:
     return parser.parse_args(args=sys.argv[1:] or ["--help"])
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def run_crococlean(
     input_table_fp: Path,
     conta_events_fp: Path,
     output_table_fp: Path,
     filtering_ab_thr_factor: float | None,
+    normalize_ab: bool,
     nproc: int,
 ) -> None:
     """Run CroCoClean on the specified input files."""
@@ -188,6 +202,7 @@ def run_crococlean(
         input_table = ab_table_utils.read_filter_normalize(
             input_table_fh,
             filtering_ab_thr_factor,
+            normalize_ab,
         )
 
     with open(conta_events_fp, "r", encoding="utf8") as conta_events_fh:
@@ -197,6 +212,7 @@ def run_crococlean(
         input_table,
         conta_events,
         nproc,
+        normalize_ab,
     )
 
     corrected_table.to_csv(
@@ -225,6 +241,7 @@ def main() -> None:
         args.conta_events_fp,
         args.output_table_fp,
         args.filtering_ab_thr_factor,
+        args.normalize_ab,
         args.nproc,
     )
 
